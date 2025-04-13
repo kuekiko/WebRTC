@@ -8,31 +8,27 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest  # 使用最新的 macOS 环境
+    runs-on: macos-latest
 
     steps:
-    # Step 1: Checkout the code from repository
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Set up dependencies (installing depot_tools, etc.)
     - name: Set up depot_tools
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
         export PATH=$(pwd)/depot_tools:$PATH
         echo "Depot tools set up complete."
 
-    # Step 3: Fetch WebRTC
     - name: Fetch WebRTC
       run: |
         fetch --nohooks webrtc_ios
         cd src
         git fetch --all
-        git checkout main  # 选择你需要的分支，例如 main 或其他
+        git checkout main
         gclient sync --with_branch_heads --with_tags
         cd ..
 
-    # Step 4: Configure and Build WebRTC
     - name: Configure and build WebRTC for iOS arm64
       run: |
         cd src
@@ -40,7 +36,6 @@ jobs:
         gn gen out/ios-arm64 --args="target_os=\"ios\" target_cpu=\"arm64\" ios_deployment_target=\"12.0\" is_component_build=false rtc_build_framework=false rtc_build_tests=false rtc_include_tests=false"
         ninja -C out/ios-arm64 webrtc
 
-    # Step 5: Prepare the iOS static library for upload
     - name: Package WebRTC Static Library
       run: |
         mkdir -p out/ios-arm64/WebRTC.framework/Headers
@@ -63,13 +58,11 @@ jobs:
         </plist>
         EOF
 
-        # Step 6: Create a zip file for the framework
         cd out/ios-arm64
         zip -r WebRTC.framework.zip WebRTC.framework
 
-    # Step 7: Upload the static WebRTC framework as artifact
     - name: Upload WebRTC Static Library as Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: webrtc-ios-arm64-static-framework
         path: out/ios-arm64/WebRTC.framework.zip
