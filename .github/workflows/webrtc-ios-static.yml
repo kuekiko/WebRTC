@@ -13,7 +13,7 @@ jobs:
     steps:
     # Step 1: Checkout the code from repository
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Step 2: Set up dependencies (installing depot_tools, etc.)
     - name: Set up depot_tools
@@ -69,7 +69,7 @@ jobs:
 
     # Step 7: Upload the static WebRTC framework as artifact
     - name: Upload WebRTC Static Library as Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: webrtc-ios-arm64-static-framework
         path: out/ios-arm64/WebRTC.framework.zip
