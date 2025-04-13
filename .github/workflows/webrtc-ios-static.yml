@@ -1,68 +1,51 @@
-name: Build WebRTC iOS Static (arm64)
+name: WebRTC iOS Static Build
 
 on:
-  workflow_dispatch:  # 允许手动触发工作流
-  push:
-    tags:
-      - 'v*'  # 当推送版本标签时触发
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'WebRTC branch (e.g., master or branch-heads/6167)'
+        required: true
+        default: "master"
+        type: string
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repository code
+        uses: actions/checkout@v3
 
-    - name: Set up depot_tools
-      run: |
-        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-        export PATH=$(pwd)/depot_tools:$PATH
-        echo "Depot tools set up complete."
+      - name: Setup depot_tools
+        run: |
+          if [ ! -d depot_tools ]; then
+            git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          fi
+          echo "::add-path::$(pwd)/depot_tools"
+          echo "Depot tools set up complete."
 
-    - name: Fetch WebRTC
-      run: |
-        fetch --nohooks webrtc_ios
-        cd src
-        git fetch --all
-        git checkout main
-        gclient sync --with_branch_heads --with_tags
-        cd ..
+      - name: Fetch WebRTC source code
+        run: |
+          if [ ! -d src ]; then
+            fetch --nohooks webrtc_ios
+          fi
+          cd src
+          git fetch --all
+          git checkout "${{ inputs.branch }}"
+          cd ..
+          gclient sync --with_branch_heads --with_tags
 
-    - name: Configure and build WebRTC for iOS arm64
-      run: |
-        cd src
-        export GN_DEFINES="is_debug=false rtc_build_framework=false rtc_build_examples=false rtc_enable_objc_symbol_export=true rtc_libvpx_build_vp9=true"
-        gn gen out/ios-arm64 --args="target_os=\"ios\" target_cpu=\"arm64\" ios_deployment_target=\"12.0\" is_component_build=false rtc_build_framework=false rtc_build_tests=false rtc_include_tests=false"
-        ninja -C out/ios-arm64 webrtc
+      - name: Build static library for iOS arm64
+        run: |
+          cd src
+          # 生成用于 iOS (arm64) 平台的构建配置文件
+          gn gen out/ios-arm64 --args='target_os="ios" target_cpu="arm64" ios_deployment_target="12.0" is_component_build=false rtc_build_framework=false rtc_build_tests=false rtc_include_tests=false'
+          # 使用 ninja 编译 webrtc 静态库（libwebrtc.a）
+          ninja -C out/ios-arm64 webrtc
 
-    - name: Package WebRTC Static Library
-      run: |
-        mkdir -p out/ios-arm64/WebRTC.framework/Headers
-        cp out/ios-arm64/obj/libwebrtc.a out/ios-arm64/WebRTC.framework/WebRTC
-        cp -R src/sdk/objc/api/include/* out/ios-arm64/WebRTC.framework/Headers/
-        cat > out/ios-arm64/WebRTC.framework/Info.plist <<EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>CFBundleIdentifier</key>
-            <string>org.webrtc.WebRTC</string>
-            <key>CFBundleName</key>
-            <string>WebRTC</string>
-            <key>CFBundleVersion</key>
-            <string>1.0</string>
-            <key>CFBundlePackageType</key>
-            <string>FMWK</string>
-        </dict>
-        </plist>
-        EOF
-
-        cd out/ios-arm64
-        zip -r WebRTC.framework.zip WebRTC.framework
-
-    - name: Upload WebRTC Static Library as Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: webrtc-ios-arm64-static-framework
-        path: out/ios-arm64/WebRTC.framework.zip
+      - name: Upload libwebrtc.a artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libwebrtc.a
+          path: src/out/ios-arm64/obj/libwebrtc.a
