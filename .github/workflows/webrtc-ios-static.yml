@@ -67,11 +67,9 @@ jobs:
         cd out/ios-arm64
         zip -r WebRTC.framework.zip WebRTC.framework
 
-    # Step 7: Upload the static WebRTC framework to GitHub Release
-    - name: Upload WebRTC Static Library to GitHub Release
-      uses: gh-actions/gha-release@v1
+    # Step 7: Upload the static WebRTC framework as artifact
+    - name: Upload WebRTC Static Library as Artifact
+      uses: actions/upload-artifact@v2
       with:
-        files: out/ios-arm64/WebRTC.framework.zip
-        tag_name: ${{ github.ref }}  # 使用当前的 GitHub 标签作为发布的版本
-        release_name: "WebRTC iOS Static Framework"
-        body: "This release includes the WebRTC iOS static framework for arm64 architecture."
+        name: webrtc-ios-arm64-static-framework
+        path: out/ios-arm64/WebRTC.framework.zip
