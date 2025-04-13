@@ -1,9 +1,10 @@
 name: Build WebRTC iOS Static (arm64)
 
 on:
+  workflow_dispatch:  # 允许手动触发工作流
   push:
     tags:
-      - 'v*'  # 每当推送一个版本标签时触发
+      - 'v*'  # 当推送版本标签时触发
 
 jobs:
   build:
