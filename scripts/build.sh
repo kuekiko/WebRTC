@@ -23,7 +23,7 @@ build_iOS() {
     local arch=$1
     local environment=$2
     local gen_dir="${OUTPUT_DIR}/ios-${arch}-${environment}"
-    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"12.0\" ios_enable_code_signing=false"
+    local gen_args="${COMMON_GN_ARGS} target_cpu=\"${arch}\" target_os=\"ios\" target_environment=\"${environment}\" ios_deployment_target=\"15.0\" ios_enable_code_signing=false"
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" framework_objc || exit 1
@@ -95,8 +95,8 @@ cd src
 rm -rf $OUTPUT_DIR  
 
 if [ "$IOS" = true ]; then
-    build_iOS "x64" "simulator"
-    build_iOS "arm64" "simulator"
+    # build_iOS "x64" "simulator"
+    # build_iOS "arm64" "simulator"
     build_iOS "arm64" "device"
 fi
 
@@ -128,27 +128,27 @@ LIB_COUNT=0
 if [[ "$IOS" = true ]]; then
 
     IOS_LIB_IDENTIFIER="ios-arm64"
-    IOS_SIM_LIB_IDENTIFIER="ios-x86_64_arm64-simulator"
+    # IOS_SIM_LIB_IDENTIFIER="ios-x86_64_arm64-simulator"
 
     mkdir "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    mkdir "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    # mkdir "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
     LIB_IOS_INDEX=0
-    LIB_IOS_SIMULATOR_INDEX=1
+    # LIB_IOS_SIMULATOR_INDEX=1
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
-    plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
+    # plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
     cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    # cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
 
     LIPO_IOS_FLAGS="out/ios-arm64-device/WebRTC.framework/WebRTC"
-    LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
+    # LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
 
     plist_add_architecture $LIB_IOS_INDEX "arm64"
-    plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
-    plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "x86_64"
+    # plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "arm64"
+    # plist_add_architecture $LIB_IOS_SIMULATOR_INDEX "x86_64"
 
     lipo -create -output  "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_FLAGS}
-    lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
+    # lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC" ${LIPO_IOS_SIM_FLAGS}
 
     # codesign simulator framework for local development.
     # This makes it possible for Swift Packages to run Unit Tests and show SwiftUI Previews.
