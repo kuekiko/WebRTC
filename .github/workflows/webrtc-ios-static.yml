@@ -6,46 +6,29 @@ on:
       branch:
         description: 'WebRTC branch (e.g., master or branch-heads/6167)'
         required: true
-        default: "master"
+        default: "branch-heads/0000"
         type: string
 
 jobs:
-  build:
+  Build-Script:
     runs-on: macos-latest
-
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Checkout repository code
+      - name: Check out repository code
         uses: actions/checkout@v3
-
-      - name: Setup depot_tools
+      - name: Building WebRTC framework
         run: |
-          if [ ! -d depot_tools ]; then
-            git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          fi
-          echo "::add-path::$(pwd)/depot_tools"
-          echo "Depot tools set up complete."
-
-      - name: Fetch WebRTC source code
-        run: |
-          if [ ! -d src ]; then
-            fetch --nohooks webrtc_ios
-          fi
-          cd src
-          git fetch --all
-          git checkout "${{ inputs.branch }}"
-          cd ..
-          gclient sync --with_branch_heads --with_tags
-
-      - name: Build static library for iOS arm64
-        run: |
-          cd src
-          # 生成用于 iOS (arm64) 平台的构建配置文件
-          gn gen out/ios-arm64 --args='target_os="ios" target_cpu="arm64" ios_deployment_target="12.0" is_component_build=false rtc_build_framework=false rtc_build_tests=false rtc_include_tests=false'
-          # 使用 ninja 编译 webrtc 静态库（libwebrtc.a）
-          ninja -C out/ios-arm64 webrtc
-
-      - name: Upload libwebrtc.a artifact
+          sh clean.sh
+          sh scripts/build_ios_static.sh
+        env:
+          BRANCH: ${{ inputs.branch }}
+          IOS: true
+          MACOS: false
+          MAC_CATALYST: false
+          BUILD_VP9: true
+      - name: Upload lib
         uses: actions/upload-artifact@v4
         with:
           name: libwebrtc.a
-          path: src/out/ios-arm64/obj/libwebrtc.a
+          path: src/out/ios-arm64-device/obj/libwebrtc.a
