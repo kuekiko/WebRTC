@@ -6,28 +6,28 @@ on:
       branch:
         description: 'WebRTC branch (e.g., master or branch-heads/6167)'
         required: true
-        default: "branch-heads/0000"
+        default: 'branch-heads/0000'
         type: string
 
 jobs:
-  Build-Script:
+  build:
     runs-on: macos-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Check out repository code
+      - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Building WebRTC framework
+
+      - name: Build WebRTC static library
+        working-directory: src
         run: |
-          sh clean.sh
+          # 清理前一次 artefact
+          rm -rf scripts/out
+          # 调用编译脚本
+          IOS=true \
+          BRANCH=${{ inputs.branch }} \
+          BUILD_VP9=true \
           sh scripts/build_ios_static.sh
-        env:
-          BRANCH: ${{ inputs.branch }}
-          IOS: true
-          MACOS: false
-          MAC_CATALYST: false
-          BUILD_VP9: true
-      - name: Upload lib
+
+      - name: Upload libwebrtc.a
         uses: actions/upload-artifact@v4
         with:
           name: libwebrtc.a
