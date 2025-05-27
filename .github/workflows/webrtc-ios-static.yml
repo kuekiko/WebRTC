@@ -1,3 +1,4 @@
+# .github/workflows/webrtc-ios-static.yml
 name: WebRTC iOS Static Build
 
 on:
@@ -18,14 +19,22 @@ jobs:
 
       - name: Build WebRTC static library
         working-directory: src
+        env:
+          BRANCH: ${{ inputs.branch }}
+          IOS: true
+          BUILD_VP9: true
         run: |
-          # 清理前一次 artefact
+          # 清理上次产物
           rm -rf scripts/out
-          # 调用编译脚本
-          IOS=true \
-          BRANCH=${{ inputs.branch }} \
-          BUILD_VP9=true \
-          sh scripts/build_ios_static.sh
+          # 切到分支
+          cd src
+          fetch --nohooks webrtc_ios
+          git fetch --all
+          git checkout "$BRANCH"
+          cd ..
+          gclient sync --with_branch_heads --with_tags
+          # 调用脚本
+          IOS=true BRANCH="$BRANCH" BUILD_VP9=true sh scripts/build_ios_static.sh
 
       - name: Upload libwebrtc.a
         uses: actions/upload-artifact@v4
