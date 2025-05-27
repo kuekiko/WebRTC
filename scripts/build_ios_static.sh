@@ -1,4 +1,3 @@
-```bash
 #!/bin/sh
 
 ## WebRTC static library build script for iOS arm64 only
@@ -60,4 +59,3 @@ fi
 
 # Final: list outputs
 ls -lh "${OUTPUT_DIR}/libwebrtc.a"
-```
